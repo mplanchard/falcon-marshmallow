@@ -11,7 +11,7 @@ import logging
 from typing import Container, Optional
 
 # Third party
-import simplejson as json
+import simplejson
 from falcon import Request, Response
 from falcon.errors import (
     HTTPBadRequest,
@@ -134,7 +134,7 @@ class Marshmallow:
     """Attempt to deserialize objects with any available schemas"""
 
     def __init__(self, req_key='json', resp_key='result', force_json=True,
-                 json_module=json):
+                 json_module=simplejson):
         # type: (str, str, bool, type(json)) -> None
         """Instantiate the middleware object
 
@@ -365,7 +365,7 @@ class Marshmallow:
             if errors:
                 raise HTTPInternalServerError(
                     title='Could not serialize response',
-                    description=json.dumps(errors)
+                    description=self._json.dumps(errors)
                 )
 
             resp.body = data
