@@ -1,0 +1,10 @@
+image: python:3.7
+
+stages:
+  - test
+
+test-3.7:
+  image: python:3.6
+  stage: test
+  script:
+    - tox
