@@ -5,13 +5,18 @@ Middleware class(es) for Falcon-Marshmallow
 
 # Std lib
 from __future__ import (
-    absolute_import, division, print_function, unicode_literals
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
 )
 import logging
 from typing import Container, Optional
 
 # Third party
+import marshmallow
 import simplejson
+
 from falcon import Request, Response
 from falcon.errors import (
     HTTPBadRequest,
@@ -20,14 +25,15 @@ from falcon.errors import (
     HTTPUnprocessableEntity,
     HTTPUnsupportedMediaType,
 )
-from marshmallow import Schema
+from marshmallow import Schema, ValidationError
 
 
 log = logging.getLogger(__name__)
 
 
-JSON_CONTENT_REQUIRED_METHODS = ('POST', 'PUT', 'PATCH')
-CONTENT_KEY = 'content'
+JSON_CONTENT_REQUIRED_METHODS = ("POST", "PUT", "PATCH")
+CONTENT_KEY = "content"
+MARSHMALLOW_2 = marshmallow.__version_info__ < (3,)
 
 
 def get_stashed_content(req):
@@ -62,7 +68,7 @@ class JSONEnforcer:
             which "application/json" should be required as a
             Content-Type header
         """
-        log.debug('JSONEnforcer.__init__(%s)', required_methods)
+        log.debug("JSONEnforcer.__init__(%s)", required_methods)
         self._methods = required_methods
 
     def process_request(self, req, resp):
@@ -78,19 +84,21 @@ class JSONEnforcer:
             specified by "required_methods" does not specify a
             content-type of "application/json"
         """
-        log.debug('JSONEnforcer.process_request(%s, %s)', req, resp)
+        log.debug("JSONEnforcer.process_request(%s, %s)", req, resp)
         if not req.client_accepts_json:
             raise HTTPNotAcceptable(
                 description=(
-                    'This server only supports responses encoded as JSON. '
+                    "This server only supports responses encoded as JSON. "
                     'Please update your "Accept" header to include '
                     '"application/json".'
                 )
             )
 
         if req.method in JSON_CONTENT_REQUIRED_METHODS:
-            if (req.content_type is None or
-                    'application/json' not in req.content_type):
+            if (
+                req.content_type is None
+                or "application/json" not in req.content_type
+            ):
                 raise HTTPUnsupportedMediaType(
                     description=(
                         '%s requests must have "application/json" in their '
@@ -115,7 +123,7 @@ class EmptyRequestDropper:
         :raises HTTPBadRequest: if the request has content length with
             an empty body
         """
-        log.debug('EmptyRequestDropper.process_request(%s, %s)', req, resp)
+        log.debug("EmptyRequestDropper.process_request(%s, %s)", req, resp)
         if req.content_length in (None, 0):
             return
 
@@ -125,7 +133,7 @@ class EmptyRequestDropper:
         if not content:
             raise HTTPBadRequest(
                 description=(
-                    'Empty response body. A valid JSON document is required.'
+                    "Empty response body. A valid JSON document is required."
                 )
             )
 
@@ -133,8 +141,13 @@ class EmptyRequestDropper:
 class Marshmallow:
     """Attempt to deserialize objects with any available schemas"""
 
-    def __init__(self, req_key='json', resp_key='result', force_json=True,
-                 json_module=simplejson):
+    def __init__(
+        self,
+        req_key="json",
+        resp_key="result",
+        force_json=True,
+        json_module=simplejson,
+    ):
         # type: (str, str, bool, type(json)) -> None
         """Instantiate the middleware object
 
@@ -160,8 +173,11 @@ class Marshmallow:
 
         """
         log.debug(
-            'Marshmallow.__init__(%s, %s, %s, %s)',
-            req_key, resp_key, force_json, json_module
+            "Marshmallow.__init__(%s, %s, %s, %s)",
+            req_key,
+            resp_key,
+            force_json,
+            json_module,
         )
         self._req_key = req_key
         self._resp_key = resp_key
@@ -195,16 +211,18 @@ class Marshmallow:
             ``process_response`` or ``process_resource``
         """
         log.debug(
-            'Marshmallow._get_specific_schema(%s, %s, %s)',
-            resource, method, msg_type
+            "Marshmallow._get_specific_schema(%s, %s, %s)",
+            resource,
+            method,
+            msg_type,
         )
 
-        sch_name = '%s_%s_schema' % (method.lower(), msg_type)
+        sch_name = "%s_%s_schema" % (method.lower(), msg_type)
         specific_schema = getattr(resource, sch_name, None)
         if specific_schema is not None:
             return specific_schema
 
-        sch_name = '%s_schema' % method.lower()
+        sch_name = "%s_schema" % method.lower()
         specific_schema = getattr(resource, sch_name, None)
         return specific_schema
 
@@ -238,15 +256,12 @@ class Marshmallow:
             ``process_response`` or ``process_resource``
         """
         log.debug(
-            'Marshmallow._get_schema(%s, %s, %s)',
-            resource, method, msg_type
+            "Marshmallow._get_schema(%s, %s, %s)", resource, method, msg_type
         )
-        specific_schema = cls._get_specific_schema(
-            resource, method, msg_type
-        )
+        specific_schema = cls._get_specific_schema(resource, method, msg_type)
         if specific_schema is not None:
             return specific_schema
-        return getattr(resource, 'schema', None)
+        return getattr(resource, "schema", None)
 
     def process_resource(self, req, resp, resource, params):
         # type: (Request, Response, object, dict) -> None
@@ -274,35 +289,52 @@ class Marshmallow:
             deserialized or decoded
         """
         log.debug(
-            'Marshmallow.process_resource(%s, %s, %s, %s)',
-            req, resp, resource, params
+            "Marshmallow.process_resource(%s, %s, %s, %s)",
+            req,
+            resp,
+            resource,
+            params,
         )
         if req.content_length in (None, 0):
             return
 
-        sch = self._get_schema(resource, req.method, 'request')
+        sch = self._get_schema(resource, req.method, "request")
 
         if sch is not None:
             if not isinstance(sch, Schema):
                 raise TypeError(
-                    'The schema and <method>_schema properties of a resource '
-                    'must be instantiated Marshmallow schemas.'
+                    "The schema and <method>_schema properties of a resource "
+                    "must be instantiated Marshmallow schemas."
                 )
 
             try:
                 body = get_stashed_content(req)
                 parsed = self._json.loads(body)
             except UnicodeDecodeError:
-                raise HTTPBadRequest('Body was not encoded as UTF-8')
+                raise HTTPBadRequest("Body was not encoded as UTF-8")
             except self._json.JSONDecodeError:
-                raise HTTPBadRequest('Request must be valid JSON')
+                raise HTTPBadRequest("Request must be valid JSON")
 
-            data, errors = sch.load(parsed)
+            if MARSHMALLOW_2:
+                data, errors = sch.load(parsed)
 
-            if errors:
-                raise HTTPUnprocessableEntity(
-                    description=self._json.dumps(errors)
-                )
+                if errors:
+                    raise HTTPUnprocessableEntity(
+                        description=self._json.dumps(errors)
+                    )
+            else:
+                # Marshmallow 3 or higher raises a ValidationError
+                # instead of returning a (data, errors) tuple.
+                try:
+                    data = sch.load(parsed)
+                except ValidationError as exc:
+                    raise HTTPUnprocessableEntity(
+                        description=self._json.dumps(exc.messages)
+                    )
+                except Exception as exc:
+                    raise HTTPUnprocessableEntity(
+                        description=self._json.dumps({"error": exc})
+                    )
 
             req.context[self._req_key] = data
 
@@ -314,9 +346,9 @@ class Marshmallow:
             except (ValueError, UnicodeDecodeError):
                 raise HTTPBadRequest(
                     description=(
-                        'Could not decode the request body, either because '
-                        'it was not valid JSON or because it was not encoded '
-                        'as UTF-8.'
+                        "Could not decode the request body, either because "
+                        "it was not valid JSON or because it was not encoded "
+                        "as UTF-8."
                     )
                 )
 
@@ -345,28 +377,51 @@ class Marshmallow:
             in the ``req.context`` object cannot be serialized
         """
         log.debug(
-            'Marshmallow.process_response(%s, %s, %s, %s)',
-            req, resp, resource, req_succeeded
+            "Marshmallow.process_response(%s, %s, %s, %s)",
+            req,
+            resp,
+            resource,
+            req_succeeded,
         )
         if self._resp_key not in req.context:
             return
 
-        sch = self._get_schema(resource, req.method, 'response')
+        sch = self._get_schema(resource, req.method, "response")
 
         if sch is not None:
             if not isinstance(sch, Schema):
                 raise TypeError(
-                    'The schema and <method>_schema properties of a resource '
-                    'must be instantiated Marshmallow schemas.'
+                    "The schema and <method>_schema properties of a resource "
+                    "must be instantiated Marshmallow schemas."
                 )
 
-            data, errors = sch.dumps(req.context[self._resp_key])
+            if MARSHMALLOW_2:
+                data, errors = sch.dumps(req.context[self._resp_key])
 
-            if errors:
-                raise HTTPInternalServerError(
-                    title='Could not serialize response',
-                    description=self._json.dumps(errors)
-                )
+                if errors:
+                    raise HTTPInternalServerError(
+                        title="Could not serialize response",
+                        description=self._json.dumps(errors),
+                    )
+            else:
+                # Marshmallow 3 or higher raises a ValidationError
+                # instead of returning a (data, errors) tuple.
+                try:
+                    data = sch.dumps(req.context[self._resp_key])
+                except ValidationError as exc:
+                    raise HTTPInternalServerError(
+                        title="Could not serialize response",
+                        description=self._json.dumps(exc.messages),
+                    )
+                except Exception as exc:
+                    # For some reason Marshmallow does not intercept e.g.
+                    # ValueErrors and throw a ValidationError when a value
+                    # is of the wrong type, instead letting the excpetion
+                    # percolate up.
+                    raise HTTPInternalServerError(
+                        title="Could not serialize response",
+                        description=self._json.dumps({"error": str(exc)}),
+                    )
 
             resp.body = data
 
@@ -375,10 +430,10 @@ class Marshmallow:
                 resp.body = self._json.dumps(req.context[self._resp_key])
             except TypeError:
                 raise HTTPInternalServerError(
-                    title='Could not serialize response',
+                    title="Could not serialize response",
                     description=(
-                        'The server attempted to serialize an object that '
-                        'cannot be serialized. This is likely a server-side '
-                        'bug.'
-                    )
+                        "The server attempted to serialize an object that "
+                        "cannot be serialized. This is likely a server-side "
+                        "bug."
+                    ),
                 )
