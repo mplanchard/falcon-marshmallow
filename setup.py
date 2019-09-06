@@ -7,13 +7,13 @@ from setuptools import setup, find_packages
 from textwrap import dedent
 
 
-NAME = 'falcon_marshmallow'
-URL = 'https://www.github.com/ihiji/falcon-marshmallow'
-AUTHOR = 'Matthew Planchard'
-EMAIL = 'engineering@ihiji.com'
+NAME = "falcon_marshmallow"
+URL = "https://www.github.com/mplanchard/falcon-marshmallow"
+AUTHOR = "Matthew Planchard"
+EMAIL = "msplanchard@gmail.com"
 
 
-SHORT_DESC = 'Automatic Marshmallow (De)serialization in Falcon'
+SHORT_DESC = "Automatic Marshmallow (De)serialization in Falcon"
 
 LONG_DESC = dedent(
     """
@@ -39,76 +39,75 @@ LONG_DESC = dedent(
 )
 
 KEYWORDS = [
-    'ihiji',
-    'falcon',
-    'marshmallow',
-    'marshalling',
-    'middleware',
-    'serialization',
-    'deserialization',
-    'json',
-    'wsgi',
+    "ihiji",
+    "falcon",
+    "marshmallow",
+    "marshalling",
+    "middleware",
+    "serialization",
+    "deserialization",
+    "json",
+    "wsgi",
 ]
 
 
 PACKAGE_DEPENDENCIES = [
-    'falcon',
-    'marshmallow',
-    'simplejson',
+    "falcon",
+    "marshmallow",
+    "simplejson",
     'typing;python_version<"3.5"',
 ]
 
-SETUP_DEPENDENCIES = [
-    'pytest-runner',
-]
+SETUP_DEPENDENCIES = ["pytest-runner"]
 
 TEST_DEPENDENCIES = [
-    'pytest',
-    'pytest-cov',
+    "pytest",
+    "pytest-cov",
     'ipython<6;python_version<"3"',
     'ipython;python_version>="3"',
-    'ipdb',
+    "ipdb",
     'mock;python_version<"3.3"',
 ]
 
 EXTRAS_DEPENDENCIES = {}
 
 
-PACKAGE_EXCLUDE = ['*.tests', '*.tests.*']
+PACKAGE_EXCLUDE = ["*.tests", "*.tests.*"]
 
 # See https://pypi.python.org/pypi?%3Aaction=list_classifiers for all
 # available setup classifiers
 CLASSIFIERS = [
-    'Development Status :: 3 - Alpha',
+    # "Development Status :: 3 - Alpha",
     # 'Development Status :: 4 - Beta',
-    # 'Development Status :: 5 - Production/Stable',
-    'Environment :: Web Environment',
-    'Intended Audience :: Developers',
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
     # 'License :: Other/Proprietary License',
-    'License :: OSI Approved :: MIT License',
+    "License :: OSI Approved :: MIT License",
     # 'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-    'Natural Language :: English',
-    'Operating System :: POSIX :: Linux',
-    'Programming Language :: Python',
-    'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.4',
-    'Programming Language :: Python :: 3.5',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: Implementation :: CPython',
-    'Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware',
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 2.7",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 3.5",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Middleware",
 ]
 
 
-__version__ = '0.0.0'
+__version__ = "0.0.0"
 
 cwd = dirname(realpath(__file__))
 
-with open(join(cwd, '%s/_version.py' % NAME)) as version_file:
+with open(join(cwd, "%s/_version.py" % NAME)) as version_file:
     for line in version_file:
         # This will populate the __version__ and __version_info__ variables
-        if line.startswith('__'):
+        if line.startswith("__"):
             exec(line)
 
 setup(
