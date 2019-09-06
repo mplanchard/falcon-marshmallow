@@ -384,7 +384,7 @@ class TestExtraMiddleware:
         # We have to forge the content-length header, because if it is
         # made automatically for our empty body, we won't get to the check
         # of the body contents.
-        heads = {'Content-Length': str('20')} if empty_body else None
+        heads = {'Content-Length': str('20')} if empty_body else {}
         body = '' if empty_body else None
 
         res = client.simulate_get(

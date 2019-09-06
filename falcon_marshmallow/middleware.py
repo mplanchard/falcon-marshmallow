@@ -331,6 +331,10 @@ class Marshmallow:
                     raise HTTPUnprocessableEntity(
                         description=self._json.dumps(exc.messages)
                     )
+                except Exception as exc:
+                    raise HTTPUnprocessableEntity(
+                        description=self._json.dumps({"error": exc})
+                    )
 
             req.context[self._req_key] = data
 
@@ -408,6 +412,15 @@ class Marshmallow:
                     raise HTTPInternalServerError(
                         title="Could not serialize response",
                         description=self._json.dumps(exc.messages),
+                    )
+                except Exception as exc:
+                    # For some reason Marshmallow does not intercept e.g.
+                    # ValueErrors and throw a ValidationError when a value
+                    # is of the wrong type, instead letting the excpetion
+                    # percolate up.
+                    raise HTTPInternalServerError(
+                        title="Could not serialize response",
+                        description=self._json.dumps({"error": str(exc)}),
                     )
 
             resp.body = data
