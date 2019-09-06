@@ -1,0 +1,60 @@
+image: python:3
+
+stages:
+  - test
+
+test-2.7:
+  image: python:2.7
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py27
+
+test-3.4:
+  image: python:3.4
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py34
+
+test-3.5-marshmallow-2:
+  image: python:3.5
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py35-marshmallow2
+
+test-3.5-marshmallow-3:
+  image: python:3.5
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py35-marshmallow3
+
+test-3.6-marshmallow-2:
+  image: python:3.6
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py36-marshmallow2
+
+test-3.6-marshmallow-2:
+  image: python:3.6
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py36-marshmallow3
+
+test-3.7-marshmallow-2:
+  image: python:3.7
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py37-marshmallow2
+
+test-3.7-marshmallow-3:
+  image: python:3.7
+  stage: test
+  script:
+    - pip install tox
+    - tox -e py37-marshmallow3

@@ -5,7 +5,10 @@ Tests for falcon_marshmallow.middleware
 
 # Std lib
 from __future__ import (
-    absolute_import, division, print_function, unicode_literals
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
 )
 
 try:
@@ -22,6 +25,7 @@ from marshmallow import fields, Schema
 
 # Local
 from falcon_marshmallow import middleware as mid
+from falcon_marshmallow.middleware import MARSHMALLOW_2
 
 
 class TestMarshmallow:
@@ -31,86 +35,102 @@ class TestMarshmallow:
 
     class FooSchema(Schema):
         """Convert foo to bar for testing purposes"""
-        bar = fields.String(load_from='foo', dump_to='foo')
+
+        if MARSHMALLOW_2:
+            bar = fields.String(load_from="foo", dump_to="foo")
+        else:
+            bar = fields.String(data_key="foo")
         int = fields.Integer()
 
     def test_instantiation(self):
         """Test instantiating the class"""
         mid.Marshmallow()
 
-    @pytest.mark.parametrize('method, attr_name, has_sch', [
-        ('GET', 'get_schema', True),
-        ('get', 'get_schema', True),
-        ('get', 'get_response_schema', False),
-        ('get', 'get_request_schema', True),
-        ('get', 'schema', False),
-        ('get', 'put_schema', False),
-        ('POST', 'post_schema', True),
-        ('post', 'post_schema', True),
-        ('POST', 'schema', False),
-        ('POST', 'get_schema', False),
-        ('post', 'post_response_schema', False),
-        ('post', 'post_request_schema', True),
-        ('PATCH', 'patch_schema', True),
-        ('patch', 'patch_schema', True),
-        ('PUT', 'put_schema', True),
-        ('put', 'put_schema', True),
-        ('DELETE', 'delete_schema', True),
-        ('delete', 'delete_schema', True),
-    ])
+    @pytest.mark.parametrize(
+        "method, attr_name, has_sch",
+        [
+            ("GET", "get_schema", True),
+            ("get", "get_schema", True),
+            ("get", "get_response_schema", False),
+            ("get", "get_request_schema", True),
+            ("get", "schema", False),
+            ("get", "put_schema", False),
+            ("POST", "post_schema", True),
+            ("post", "post_schema", True),
+            ("POST", "schema", False),
+            ("POST", "get_schema", False),
+            ("post", "post_response_schema", False),
+            ("post", "post_request_schema", True),
+            ("PATCH", "patch_schema", True),
+            ("patch", "patch_schema", True),
+            ("PUT", "put_schema", True),
+            ("put", "put_schema", True),
+            ("DELETE", "delete_schema", True),
+            ("delete", "delete_schema", True),
+        ],
+    )
     def test_get_specific_schema(self, method, attr_name, has_sch):
         # type: (str, str, bool) -> None
         """Test getting a specific schema from a resource"""
 
         class TestResource:
             """Quick test object"""
+
             def __init__(self):
-                setattr(self, attr_name, 'foo')
+                setattr(self, attr_name, "foo")
 
         tr = TestResource()
 
-        sch = mid.Marshmallow._get_specific_schema(tr, method, 'request')
+        sch = mid.Marshmallow._get_specific_schema(tr, method, "request")
 
         if has_sch:
-            assert sch == 'foo'
+            assert sch == "foo"
 
         else:
             assert sch is None
 
-    @pytest.mark.parametrize('method, attrs, exp_value', [
-        ('GET', (('get_schema', 'foo'), ('schema', 'bar')), 'foo'),
-        (
-            'GET',
-            (('get_schema', 'foo'), ('schema', 'bar'), ('post_schema', 'baz')),
-            'foo'
-        ),
-        (
-            'GET',
+    @pytest.mark.parametrize(
+        "method, attrs, exp_value",
+        [
+            ("GET", (("get_schema", "foo"), ("schema", "bar")), "foo"),
             (
-                ('get_schema', 'foo'),
-                ('get_response_schema', 'bar'),
-                ('get_request_schema', 'boo'),
-                ('post_response_schema', 'baz')
+                "GET",
+                (
+                    ("get_schema", "foo"),
+                    ("schema", "bar"),
+                    ("post_schema", "baz"),
+                ),
+                "foo",
             ),
-            'bar'
-        ),
-        ('GET', (('post_schema', 'foo'), ('schema', 'bar')), 'bar'),
-        ('GET', (('schema', 'bar'), ), 'bar'),
-        ('GET', (), None),
-    ])
+            (
+                "GET",
+                (
+                    ("get_schema", "foo"),
+                    ("get_response_schema", "bar"),
+                    ("get_request_schema", "boo"),
+                    ("post_response_schema", "baz"),
+                ),
+                "bar",
+            ),
+            ("GET", (("post_schema", "foo"), ("schema", "bar")), "bar"),
+            ("GET", (("schema", "bar"),), "bar"),
+            ("GET", (), None),
+        ],
+    )
     def test_get_schema(self, method, attrs, exp_value):
         # type: (str, tuple, str) -> None
         """Test getting a general or specific schema"""
 
         class TestResource:
             """Quick test object"""
+
             def __init__(self):
                 for attr_name, value in attrs:
                     setattr(self, attr_name, value)
 
         tr = TestResource()
 
-        val = mid.Marshmallow()._get_schema(tr, method, 'response')
+        val = mid.Marshmallow()._get_schema(tr, method, "response")
 
         if exp_value is None:
             assert val is None
@@ -118,84 +138,85 @@ class TestMarshmallow:
             assert val == exp_value
 
     @pytest.mark.parametrize(
-        'stream, schema, schema_err, bad_sch, force_json, json_err, '
-        'exp_ret', [
-            (  # Good schema
+        "stream, schema, schema_err, bad_sch, force_json, json_err, " "exp_ret",
+        [
+            (  # 0: Good schema
                 '{"foo": "test"}',
                 True,
                 False,
                 False,
                 False,
                 False,
-                {'bar': 'test'}
+                {"bar": "test"},
             ),
-            (  # Schema errors on load
+            (  # 1: Schema errors on load
                 '{"foo": "test", "int": "test"}',
                 True,
                 True,
                 False,
                 False,
                 False,
-                {'bar': 'test'}
+                {"bar": "test"},
             ),
-            (  # Good schema, bad unicode in body
+            (  # 2: Good schema, bad unicode in body
                 '{"foo": "testé"}',
                 True,
                 False,
                 False,
                 False,
                 False,
-                {'bar': 'testé'}
+                {"bar": "testé"},
             ),
-            (  # Bad schema
+            (  # 3: Bad schema
                 '{"foo": "test"}',
                 True,
                 False,
                 True,
                 False,
                 False,
-                {'bar': 'test'}
+                {"bar": "test"},
             ),
-            (  # No schema, no force json (no change to req.context)
+            (  # 4: No schema, no force json (no change to req.context)
                 '{"foo": "test"}',
                 False,
                 False,
                 False,
                 False,
                 False,
-                {'bar': 'test'}
+                {"bar": "test"},
             ),
-            (  # No schema, force json
+            (  # 5: No schema, force json
                 '{"foo": "test"}',
                 False,
                 False,
                 False,
                 True,
                 False,
-                {'foo': 'test'}
+                {"foo": "test"},
             ),
-            (  # No schema, force json, bad json
+            (  # 6: No schema, force json, bad json
                 '{"foo": }',
                 False,
                 False,
                 False,
                 True,
                 True,
-                {'foo': 'test'}
+                {"foo": "test"},
             ),
-            (  # No schema, force json, good json, bad unicode
+            (  # 7: No schema, force json, good json, bad unicode
                 '{"foo": "testé"}',
                 False,
                 False,
                 False,
                 True,
                 False,
-                {'foo': 'testé'}
+                {"foo": "testé"},
             ),
-        ]
+        ],
     )
-    def test_process_resource(self, stream, schema, schema_err, bad_sch,
-                              force_json, json_err, exp_ret):
+    def test_process_resource(
+        self, stream, schema, schema_err, bad_sch, force_json, json_err, exp_ret
+    ):
         # type: (str, bool, bool, bool, bool, bool, bool, dict) -> None
         """Test processing a resource
 
@@ -218,102 +239,104 @@ class TestMarshmallow:
         else:
             mw._get_schema = lambda *x, **y: None
 
-        req = mock.Mock(method='GET')
+        req = mock.Mock(method="GET")
         req.bounded_stream.read.return_value = stream
         req.context = {}
 
         if schema_err:
             with pytest.raises(errors.HTTPUnprocessableEntity):
                 # noinspection PyTypeChecker
-                mw.process_resource(req, 'foo', 'foo', 'foo')
+                mw.process_resource(req, "foo", "foo", "foo")
             return
         if bad_sch:
             with pytest.raises(TypeError):
                 # noinspection PyTypeChecker
-                mw.process_resource(req, 'foo', 'foo', 'foo')
+                mw.process_resource(req, "foo", "foo", "foo")
             return
         if json_err:
             with pytest.raises(errors.HTTPBadRequest):
                 # noinspection PyTypeChecker
-                mw.process_resource(req, 'foo', 'foo', 'foo')
+                mw.process_resource(req, "foo", "foo", "foo")
             return
 
         # noinspection PyTypeChecker
-        mw.process_resource(req, 'foo', 'foo', 'foo')
+        mw.process_resource(req, "foo", "foo", "foo")
         if schema or force_json:
             assert req.context[mw._req_key] == exp_ret
         else:
             assert mw._req_key not in req.context
 
     @pytest.mark.parametrize(
-        'res, schema, sch_err, bad_sch, force_json, json_err, exp_ret', [
-            (  # Good result, good schema
-                {'bar': 'test'},
+        "res, schema, sch_err, bad_sch, force_json, json_err, exp_ret",
+        [
+            (  # 0: Good result, good schema
+                {"bar": "test"},
                 True,
                 False,
                 False,
                 False,
                 False,
-                '{"foo": "test"}'
+                '{"foo": "test"}',
             ),
-            (  # Schema error on loading result
-                {'bar': 'test', 'int': 'foo'},
+            (  # 1: Schema error on loading result
+                {"bar": "test", "int": "foo"},
                 True,
                 True,
                 False,
                 False,
                 False,
-                '{"foo": "test"}'
+                '{"foo": "test"}',
             ),
-            (  # Bad schema instance (not an instance)
-                {'bar': 'test'},
+            (  # 2: Bad schema instance (not an instance)
+                {"bar": "test"},
                 True,
                 False,
                 True,
                 False,
                 False,
-                '{"foo": "test"}'
+                '{"foo": "test"}',
             ),
-            (  # Good result, no schema, force json
-                {'bar': 'test'},
+            (  # 3: Good result, no schema, force json
+                {"bar": "test"},
                 False,
                 False,
                 False,
                 True,
                 False,
-                '{"bar": "test"}'
+                '{"bar": "test"}',
             ),
-            (  # Unserializable response, no schema, force json
-                set('foo'),
+            (  # 4: Unserializable response, no schema, force json
+                set("foo"),
                 False,
                 False,
                 False,
                 True,
                 True,
-                '{"bar": "test"}'
+                '{"bar": "test"}',
             ),
-            (  # No schema, no force json
-                {'bar': 'test'},
+            (  # 5: No schema, no force json
+                {"bar": "test"},
                 False,
                 False,
                 False,
                 False,
                 False,
-                '{"foo": "test"}'
+                '{"foo": "test"}',
             ),
-            (  # No result
+            (  # 6: No result
                 None,
                 True,
                 False,
                 False,
                 False,
                 False,
-                '{"foo": "test"}'
+                '{"foo": "test"}',
             ),
-        ]
+        ],
     )
-    def test_process_response(self, res, schema, sch_err, bad_sch, force_json,
-                              json_err, exp_ret):
+    def test_process_response(
+        self, res, schema, sch_err, bad_sch, force_json, json_err, exp_ret
+    ):
         """Test process_response
 
         :param res: the value to put in the result key on req.context
@@ -335,7 +358,7 @@ class TestMarshmallow:
         else:
             mw._get_schema = lambda *x, **y: None
 
-        req = mock.Mock(method='GET')
+        req = mock.Mock(method="GET")
         if res is None:
             req.context = {}
         else:
@@ -346,21 +369,21 @@ class TestMarshmallow:
         if bad_sch:
             with pytest.raises(TypeError):
                 # noinspection PyTypeChecker
-                mw.process_response(req, resp, 'foo', 'foo')
+                mw.process_response(req, resp, "foo", "foo")
             return
         if sch_err:
             with pytest.raises(errors.HTTPInternalServerError):
                 # noinspection PyTypeChecker
-                mw.process_response(req, resp, 'foo', 'foo')
+                mw.process_response(req, resp, "foo", "foo")
             return
         if json_err:
             with pytest.raises(errors.HTTPInternalServerError):
                 # noinspection PyTypeChecker
-                mw.process_response(req, resp, 'foo', 'foo')
+                mw.process_response(req, resp, "foo", "foo")
             return
 
         # noinspection PyTypeChecker
-        mw.process_response(req, resp, 'foo', 'foo')
+        mw.process_response(req, resp, "foo", "foo")
         if res is None or (not schema and not force_json):
             # "body" has not been written, and is thus a mock object still
             assert isinstance(resp.body, mock.Mock)
@@ -373,39 +396,42 @@ class TestJSONEnforcer:
 
     enforcer = mid.JSONEnforcer()
 
-    @pytest.mark.parametrize('accepts', [True, False])
+    @pytest.mark.parametrize("accepts", [True, False])
     def test_client_accept(self, accepts):
         # type: (bool) -> None
         """Test asserting that the client accepts JSON"""
         req = mock.Mock()
         req.client_accepts_json = accepts
-        req.method = 'GET'
+        req.method = "GET"
 
         if not accepts:
             with pytest.raises(errors.HTTPNotAcceptable):
                 # noinspection PyTypeChecker
-                self.enforcer.process_request(req, 'foo')
+                self.enforcer.process_request(req, "foo")
         else:
             # noinspection PyTypeChecker
-            self.enforcer.process_request(req, 'foo')
+            self.enforcer.process_request(req, "foo")
 
-    @pytest.mark.parametrize('method, content_type, raises', [
-        ('GET', None, False),
-        ('GET', 'application/json', False),
-        ('GET', 'mimetype/xml', False),
-        ('POST', None, True),
-        ('POST', 'application/json', False),
-        ('POST', 'mimetype/xml', True),
-        ('PATCH', None, True),
-        ('PATCH', 'application/json', False),
-        ('PATCH', 'mimetype/xml', True),
-        ('PUT', None, True),
-        ('PUT', 'application/json', False),
-        ('PUT', 'mimetype/xml', True),
-        ('DELETE', None, False),
-        ('DELETE', 'application/json', False),
-        ('DELETE', 'mimetype/xml', False),
-    ])
+    @pytest.mark.parametrize(
+        "method, content_type, raises",
+        [
+            ("GET", None, False),
+            ("GET", "application/json", False),
+            ("GET", "mimetype/xml", False),
+            ("POST", None, True),
+            ("POST", "application/json", False),
+            ("POST", "mimetype/xml", True),
+            ("PATCH", None, True),
+            ("PATCH", "application/json", False),
+            ("PATCH", "mimetype/xml", True),
+            ("PUT", None, True),
+            ("PUT", "application/json", False),
+            ("PUT", "mimetype/xml", True),
+            ("DELETE", None, False),
+            ("DELETE", "application/json", False),
+            ("DELETE", "mimetype/xml", False),
+        ],
+    )
     def test_method_content_type(self, method, content_type, raises):
         # type: (str, Optional[str], bool) -> None
         """Test checking of content-type for certain methods"""
@@ -416,10 +442,10 @@ class TestJSONEnforcer:
         if raises:
             with pytest.raises(errors.HTTPUnsupportedMediaType):
                 # noinspection PyTypeChecker
-                self.enforcer.process_request(req, 'foo')
+                self.enforcer.process_request(req, "foo")
         else:
             # noinspection PyTypeChecker
-            self.enforcer.process_request(req, 'foo')
+            self.enforcer.process_request(req, "foo")
 
 
 class TestEmptyRequestDropper:
@@ -427,19 +453,19 @@ class TestEmptyRequestDropper:
 
     dropper = mid.EmptyRequestDropper()
 
-    @pytest.mark.parametrize('content_length', [None, 0])
+    @pytest.mark.parametrize("content_length", [None, 0])
     def test_ignore_when_no_content_length(self, content_length):
         # type: (Optional[int]) -> None
         """Test that we drop out with no content_length"""
-        req = mock.Mock(content_length=content_length, )
+        req = mock.Mock(content_length=content_length)
 
         # noinspection PyTypeChecker
-        self.dropper.process_request(req, 'foo')
+        self.dropper.process_request(req, "foo")
 
         # Assert we didn't go past the first return
         req.bounded_stream.read.assert_not_called()
 
-    @pytest.mark.parametrize('read', ['foo', ''])
+    @pytest.mark.parametrize("read", ["foo", ""])
     def test_raise_on_empty_body(self, read):
         # type: (str) -> None
         """Test that we raise if we get an empty body"""
@@ -449,7 +475,8 @@ class TestEmptyRequestDropper:
         if not read:
             with pytest.raises(errors.HTTPBadRequest):
                 # noinspection PyTypeChecker
-                self.dropper.process_request(req, 'foo')
+                self.dropper.process_request(req, "foo")
         else:
             # noinspection PyTypeChecker
-            self.dropper.process_request(req, 'foo')
+            self.dropper.process_request(req, "foo")
+
