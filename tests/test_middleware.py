@@ -479,4 +479,3 @@ class TestEmptyRequestDropper:
         else:
             # noinspection PyTypeChecker
             self.dropper.process_request(req, "foo")
-
