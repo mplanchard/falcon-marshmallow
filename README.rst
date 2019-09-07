@@ -229,6 +229,11 @@ fix documentation typos, etc. If opening a PR, please be sure to run
 tests, and ensure that your additions are compatible with Python 2.7, 3.4,
 and above.
 
+Ideally, PRs should have tests, but feel free to open a PR with or without
+them. The maintainers will either suggest some tests for you to add, or,
+if you are not able to add tests yourself, we may open a PR against your
+branch with some added tests before merging.
+
 Testing
 +++++++
 
