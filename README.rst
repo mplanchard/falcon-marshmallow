@@ -4,16 +4,16 @@ falcon-marshmallow
 Marshmallow serialization/deserialization middleware for Falcon
 
 =============   ==================================================
-Maintained By   `Ihiji, Inc.`_
+Maintained By   `Matthew Planchard`_
 Author          `Matthew Planchard`_
 License         `MIT`_
-Contributors    `Your Name Here!`_
+Contributors    `@timc13`_, `Your Name Here!`_
 =============   ==================================================
 
-.. _Ihiji, Inc.: https://github.com/ihiji
 .. _Matthew Planchard: https://github.com/mplanchard
-.. _MIT: https://github.com/ihiji/falcon-marshmallow/blob/master/LICENSE
+.. _MIT: https://github.com/mplanchard/falcon-marshmallow/blob/master/LICENSE
 .. _Your Name Here!: Contributing_
+.. _@timc13: https://github.com/timc13
 
 Usage
 -----
@@ -149,10 +149,10 @@ resource in our chosen data store::
         svr = simple_server.make_server('127.0.0.1', 8080, app)
         svr.serve_forever()
 
-Done! 
+Done!
 
-When parsing a request body, if it cannot be decoded or its JSON 
-is malformed, an HTTPBadRequest error will be raised. If the 
+When parsing a request body, if it cannot be decoded or its JSON
+is malformed, an HTTPBadRequest error will be raised. If the
 deserialization of the request body fails due to schema validation errors,
 an HTTPUnprocessableEntity error will be raised.
 
