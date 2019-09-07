@@ -234,15 +234,47 @@ them. The maintainers will either suggest some tests for you to add, or,
 if you are not able to add tests yourself, we may open a PR against your
 branch with some added tests before merging.
 
+Development requires that you have Python 3 available on your path.
+
+Development
++++++++++++
+
+To set up a local virtual environment with all required packages installed,
+run::
+
+  make setup
+
+If you are using VSCode, the `.vscode/settings.json` file included in this
+project should now be automatically configured to autoformat on save and
+to perform all of the lint checks that are required for this package.
+
+Linting
++++++++
+
+The linting checks that run in CI can be manually run locally with::
+
+  make lint
+
+Note that this will automatically create a local virtual environment for
+you if `make setup` has not yet been run.
+
 Testing
 +++++++
 
-To test against Python 2.7, 3.4, and 3.6, you will need to ``pip install tox``
-for your system or active Python if you do not already have it installed,
-and then run::
+To run tests against Python 2.7 and 3.4 forward, you can just run::
 
-  tox
+  make test
 
-To test against your active Python environment::
+Note that this will automatically create a local virtual environment for
+you if `make setup` has not yet been run.
 
-  python setup.py test --addopts "--cov=falcon_marshmallow"
+Testing against all environments of course requires that you have the
+requisite Python executables available on your `PATH`. If you don't, you
+will get "interpreter not found" errors for the missing python versions.
+
+To run against a particular version of Python, use, for example::
+
+  TESTENV=py37 make test-env
+
+Where `TESTENV` is any of the environments configured in `tox.ini`, or
+any of tox's standard environments (e.g. `py36`, `py37`, etc.).
