@@ -1,11 +1,25 @@
 image: python:3
 
 stages:
+  - lint
   - test
+
+lint:
+  image: python:3.7
+  stage: lint
+  script:
+    # Work around pylint not being able to figure out falcon imports when
+    # using manylinux wheels.
+    # See https://github.com/falconry/falcon/issues/1553 for details.
+    - make setup
+    - source venv/bin/activate; pip install no-manylinux
+    - "source venv/bin/activate; pip install --no-binary :all: --force-reinstall falcon"
+    - make lint
 
 test-2.7:
   image: python:2.7
   stage: test
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
     - pip install tox
     - tox -e py27
@@ -13,6 +27,7 @@ test-2.7:
 test-3.4:
   image: python:3.4
   stage: test
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
     - pip install tox
     - tox -e py34
@@ -20,6 +35,7 @@ test-3.4:
 test-3.5-marshmallow-2:
   image: python:3.5
   stage: test
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
     - pip install tox
     - tox -e py35-marshmallow2
@@ -27,6 +43,7 @@ test-3.5-marshmallow-2:
 test-3.5-marshmallow-3:
   image: python:3.5
   stage: test
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
     - pip install tox
     - tox -e py35-marshmallow3
@@ -34,27 +51,35 @@ test-3.5-marshmallow-3:
 test-3.6-marshmallow-2:
   image: python:3.6
   stage: test
+  variables:
+    TESTENV: py36-marshmallow2
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
-    - pip install tox
-    - tox -e py36-marshmallow2
+    - make test-env
 
-test-3.6-marshmallow-2:
+test-3.6-marshmallow-3:
   image: python:3.6
   stage: test
+  variables:
+    TESTENV: py36-marshmallow3
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
-    - pip install tox
-    - tox -e py36-marshmallow3
+    - make test-env
 
 test-3.7-marshmallow-2:
   image: python:3.7
   stage: test
+  variables:
+    TESTENV: py37-marshmallow2
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
-    - pip install tox
-    - tox -e py37-marshmallow2
+    - make test-env
 
 test-3.7-marshmallow-3:
   image: python:3.7
   stage: test
+  variables:
+    TESTENV: py37-marshmallow3
+  coverage: '/^TOTAL.*\s+(\d+\%)$/'
   script:
-    - pip install tox
-    - tox -e py37-marshmallow3
+    - make test-env

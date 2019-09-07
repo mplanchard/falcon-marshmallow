@@ -5,7 +5,10 @@ Tests for full integration with a Falcon app
 
 # Std lib
 from __future__ import (
-    absolute_import, division, print_function, unicode_literals
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals,
 )
 import logging
 from datetime import date
@@ -26,6 +29,7 @@ log = logging.getLogger(__name__)
 
 class Philosopher(Schema):
     """Philosopher schema"""
+
     id = fields.String()
     name = fields.String()
     birth = fields.Date()
@@ -42,14 +46,15 @@ class DataStore:
     """
 
     def __init__(self):
+        """Construct the datastore."""
         self.store = {
-            'first': {
-                'id': 'first',
-                'name': 'Søren Kierkegaard',
-                'birth': date(1813, 5, 5),
-                'death': date(1855, 11, 11),
-                'schools': ['existentialism'],
-                'works': ['Fear and Trembling', 'Either/Or']
+            "first": {
+                "id": "first",
+                "name": "Søren Kierkegaard",
+                "birth": date(1813, 5, 5),
+                "death": date(1855, 11, 11),
+                "schools": ["existentialism"],
+                "works": ["Fear and Trembling", "Either/Or"],
             }
         }
 
@@ -60,7 +65,7 @@ class DataStore:
     def insert(self, obj):
         """Insert a new object into the store"""
         key = str(uuid1())
-        obj['id'] = key
+        obj["id"] = key
         self.store[key] = obj
         return obj
 
@@ -71,7 +76,7 @@ class DataStore:
 
 @pytest.fixture()
 def hydrated_client():
-    """A Falcon API with an endpoint for testing Marshmallow"""
+    """Create a Falcon API with an endpoint for testing Marshmallow"""
     data_store = DataStore()
 
     class PhilosopherResource:
@@ -80,19 +85,19 @@ def hydrated_client():
 
         def on_get(self, req, resp, phil_id):
             """Get a philosopher"""
-            req.context['result'] = data_store.get(phil_id)
+            req.context["result"] = data_store.get(phil_id)
 
     class PhilosopherCollection:
 
         schema = Philosopher()
 
         def on_post(self, req, resp):
-            req.context['result'] = data_store.insert(req.context['json'])
+            req.context["result"] = data_store.insert(req.context["json"])
 
     app = API(middleware=[m.Marshmallow()])
 
-    app.add_route('/philosophers', PhilosopherCollection())
-    app.add_route('/philosophers/{phil_id}', PhilosopherResource())
+    app.add_route("/philosophers", PhilosopherCollection())
+    app.add_route("/philosophers/{phil_id}", PhilosopherResource())
 
     yield testing.TestClient(app)
 
@@ -101,8 +106,8 @@ def hydrated_client():
 
 @pytest.fixture()
 def hydrated_client_multiple_middleware():
-    """A Falcon API with an endpoint for testing Marshmallow, with all
-    included middlewares registered."""
+    """Create a server for testing, with all included middlewares"""
+
     data_store = DataStore()
 
     class PhilosopherResource:
@@ -111,22 +116,21 @@ def hydrated_client_multiple_middleware():
 
         def on_get(self, req, resp, phil_id):
             """Get a philosopher"""
-            req.context['result'] = data_store.get(phil_id)
+            req.context["result"] = data_store.get(phil_id)
 
     class PhilosopherCollection:
 
         schema = Philosopher()
 
         def on_post(self, req, resp):
-            req.context['result'] = data_store.insert(req.context['json'])
+            req.context["result"] = data_store.insert(req.context["json"])
 
-    app = API(middleware=[
-        m.Marshmallow(),
-        m.JSONEnforcer(),
-        m.EmptyRequestDropper()])
+    app = API(
+        middleware=[m.Marshmallow(), m.JSONEnforcer(), m.EmptyRequestDropper()]
+    )
 
-    app.add_route('/philosophers', PhilosopherCollection())
-    app.add_route('/philosophers/{phil_id}', PhilosopherResource())
+    app.add_route("/philosophers", PhilosopherCollection())
+    app.add_route("/philosophers/{phil_id}", PhilosopherResource())
 
     yield testing.TestClient(app)
 
@@ -144,29 +148,26 @@ class TestAllIncludedMiddleware:
     """
 
     headers = {
-        'Content-Type': str('application/json'),
-        'Accepts': str('application/json')
+        "Content-Type": str("application/json"),
+        "Accepts": str("application/json"),
     }
 
     def test_get(self, hydrated_client_multiple_middleware):
         resp = hydrated_client_multiple_middleware.simulate_get(
-            '/philosophers/first',
-            headers=self.headers
+            "/philosophers/first", headers=self.headers
         )
         assert resp.status_code == 200
 
     def test_post(self, hydrated_client_multiple_middleware):
         phil = {
-            'name': 'Albert Camus',
-            'birth': date(1913, 11, 7).isoformat(),
-            'death': date(1960, 1, 4).isoformat(),
-            'schools': ['existentialism', 'absurdism'],
-            'works': ['The Stranger', 'The Myth of Sisyphus']
+            "name": "Albert Camus",
+            "birth": date(1913, 11, 7).isoformat(),
+            "death": date(1960, 1, 4).isoformat(),
+            "schools": ["existentialism", "absurdism"],
+            "works": ["The Stranger", "The Myth of Sisyphus"],
         }
         resp = hydrated_client_multiple_middleware.simulate_post(
-            '/philosophers',
-            body=json.dumps(phil),
-            headers=self.headers
+            "/philosophers", body=json.dumps(phil), headers=self.headers
         )  # type: testing.Result
         assert resp.status_code == 200
 
@@ -178,71 +179,71 @@ class TestMarshmallowMiddleware:
         # type: (testing.TestClient) -> None
         """Test getting the pre-populated philosopher"""
         resp = hydrated_client.simulate_get(
-            '/philosophers/first'
+            "/philosophers/first"
         )  # type: testing.Result
         assert resp.status_code == 200
         parsed = resp.json
-        assert parsed['id'] == 'first'
-        assert parsed['name'] == 'Søren Kierkegaard'
-        assert parsed['birth'] == '1813-05-05'  # proper serialization to ISO
+        assert parsed["id"] == "first"
+        assert parsed["name"] == "Søren Kierkegaard"
+        assert parsed["birth"] == "1813-05-05"  # proper serialization to ISO
 
     def test_post(self, hydrated_client):
         # type: (testing.TestClient) -> None
         """Test posting a new philosopher"""
         phil = {
-            'name': 'Albért Camus',
-            'birth': date(1913, 11, 7).isoformat(),
-            'death': date(1960, 1, 4).isoformat(),
-            'schools': ['existentialism', 'absurdism'],
-            'works': ['The Stranger', 'The Myth of Sisyphus']
+            "name": "Albért Camus",
+            "birth": date(1913, 11, 7).isoformat(),
+            "death": date(1960, 1, 4).isoformat(),
+            "schools": ["existentialism", "absurdism"],
+            "works": ["The Stranger", "The Myth of Sisyphus"],
         }
-        resp = hydrated_client.simulate_post(
-            '/philosophers',
-            body=json.dumps(phil)
+        post_resp = hydrated_client.simulate_post(
+            "/philosophers", body=json.dumps(phil)
         )  # type: testing.Result
-        assert resp.status_code == 200
-        parsed = resp.json
-        assert 'id' in parsed
+        assert post_resp.status_code == 200
+        parsed = post_resp.json
+        assert "id" in parsed
 
-        resp = hydrated_client.simulate_get(
-            '/philosophers/%s' % parsed['id']
+        get_resp = hydrated_client.simulate_get(
+            "/philosophers/%s" % parsed["id"]
         )  # type: testing.Result
-        assert resp.status_code == 200
-        got = resp.json
-        assert got['id'] == parsed['id']
-        assert got['name'] == 'Albért Camus'
-        assert got['birth'] == '1913-11-07'
+        assert get_resp.status_code == 200
+        got = get_resp.json
+        assert got["id"] == parsed["id"]
+        assert got["name"] == "Albért Camus"
+        assert got["birth"] == "1913-11-07"
 
     def test_post_unprocessable_entitty(self, hydrated_client):
         # type: (testing.TestClient) -> None
         """Test posting with a bad date"""
         phil = {
-            'name': 'Albert Camus',
-            'birth': 'a long time ago',
-            'death': date(1960, 1, 4).isoformat(),
-            'schools': ['existentialism', 'absurdism'],
-            'works': ['The Stranger', 'The Myth of Sisyphus']
+            "name": "Albert Camus",
+            "birth": "a long time ago",
+            "death": date(1960, 1, 4).isoformat(),
+            "schools": ["existentialism", "absurdism"],
+            "works": ["The Stranger", "The Myth of Sisyphus"],
         }
         resp = hydrated_client.simulate_post(
-            '/philosophers',
-            body=json.dumps(phil)
+            "/philosophers", body=json.dumps(phil)
         )  # type: testing.Result
         assert resp.status == status_codes.HTTP_UNPROCESSABLE_ENTITY
         parsed = resp.json
         # Validate that our validator told us which field was invalid
-        assert 'birth' in parsed['description']
+        assert "birth" in parsed["description"]
 
-    @pytest.mark.parametrize('body', [
-        '{::'.encode(),  # invalid json bytes
-        '{::',  # bad json unicode
-        '{"foo": "bar"}'.encode() + b'\xe7'  # bad unicode
-    ])
+    @pytest.mark.parametrize(
+        "body",
+        [
+            "{::".encode(),  # invalid json bytes
+            "{::",  # bad json unicode
+            '{"foo": "bar"}'.encode() + b"\xe7",  # bad unicode
+        ],
+    )
     def test_post_bad_requests(self, hydrated_client, body):
-        # type: (testing.TestClient) -> None
+        # type: (testing.TestClient, "bytes") -> None
         """Test posting with invalid JSON"""
         resp = hydrated_client.simulate_post(
-            '/philosophers',
-            body=body
+            "/philosophers", body=body
         )  # type: testing.Result
         assert resp.status == status_codes.HTTP_BAD_REQUEST
 
@@ -250,12 +251,13 @@ class TestMarshmallowMiddleware:
 class TestExtraMiddleware:
     """Test the enforcement of convenience middleware"""
 
-    @pytest.mark.parametrize('endpoint, accepts, required, endpoint_exists', [
-        ('/foo', True, True, False),
-        ('/foo', False, True, False)
-    ])
-    def test_accepts_json_required(self, endpoint, accepts, required,
-                                   endpoint_exists):
+    @pytest.mark.parametrize(
+        "endpoint, accepts, required, endpoint_exists",
+        [("/foo", True, True, False), ("/foo", False, True, False)],
+    )
+    def test_accepts_json_required(
+        self, endpoint, accepts, required, endpoint_exists
+    ):
         # type: (str, bool, bool, bool) -> None
         """Test that application/json is required in the accepts header
 
@@ -273,9 +275,9 @@ class TestExtraMiddleware:
         client = testing.TestClient(API(middleware=[m.JSONEnforcer()]))
 
         if accepts:
-            heads = {'Accept': str('application/json')}
+            heads = {"Accept": str("application/json")}
         else:
-            heads = {'Accept': str('mimetype/xml')}
+            heads = {"Accept": str("mimetype/xml")}
 
         res = client.simulate_get(
             endpoint, headers=heads
@@ -285,8 +287,9 @@ class TestExtraMiddleware:
             if accepts:
                 if endpoint_exists:
                     assert bool(
-                        200 <= res.status_code < 300 or
-                        res.status_code == status_codes.HTTP_METHOD_NOT_ALLOWED
+                        200 <= res.status_code < 300
+                        or res.status_code
+                        == status_codes.HTTP_METHOD_NOT_ALLOWED
                     )
                 else:
                     assert res.status == status_codes.HTTP_NOT_FOUND
@@ -297,23 +300,25 @@ class TestExtraMiddleware:
             pass
 
     @pytest.mark.parametrize(
-        'endpoint, method, ct_is_json, endpoint_exists, required', [
-            ('/foo', 'GET', False, False, True),
-            ('/foo', 'GET', True, False, True),
-            ('/foo', 'DELETE', False, False, True),
-            ('/foo', 'DELETE', True, False, True),
-            ('/foo', 'POST', False, False, True),
-            ('/foo', 'POST', True, False, True),
-            ('/foo', 'PATCH', False, False, True),
-            ('/foo', 'PATCH', True, False, True),
-            ('/foo', 'PUT', False, False, True),
-            ('/foo', 'PUT', True, False, True),
-        ]
+        "endpoint, method, ct_is_json, endpoint_exists, required",
+        [
+            ("/foo", "GET", False, False, True),
+            ("/foo", "GET", True, False, True),
+            ("/foo", "DELETE", False, False, True),
+            ("/foo", "DELETE", True, False, True),
+            ("/foo", "POST", False, False, True),
+            ("/foo", "POST", True, False, True),
+            ("/foo", "PATCH", False, False, True),
+            ("/foo", "PATCH", True, False, True),
+            ("/foo", "PUT", False, False, True),
+            ("/foo", "PUT", True, False, True),
+        ],
     )
-    def test_content_type_json_required(self, endpoint, method,
-                                        endpoint_exists, ct_is_json, required):
+    def test_content_type_json_required(
+        self, endpoint, method, endpoint_exists, ct_is_json, required
+    ):
         # type: (str, str, bool, bool, bool) -> None
-        """Test HTTP methods that should reuquire content-type json
+        """Test HTTP methods that should require content-type json
 
         Note ``required`` is always true at the moment, because the
         middleware applies to all requests with no exceptions. If
@@ -329,7 +334,7 @@ class TestExtraMiddleware:
         client = testing.TestClient(API(middleware=[m.JSONEnforcer()]))
 
         if ct_is_json:
-            heads = {'Content-Type': str('application/json')}
+            heads = {"Content-Type": str("application/json")}
         else:
             heads = {}
 
@@ -344,8 +349,8 @@ class TestExtraMiddleware:
                 if ct_is_json:
                     if endpoint_exists:
                         assert bool(
-                            200 <= res.status_code < 300 or
-                            res.status_code == meth_not_allowed
+                            200 <= res.status_code < 300
+                            or res.status_code == meth_not_allowed
                         )
                     else:
                         assert res.status == status_codes.HTTP_NOT_FOUND
@@ -356,8 +361,8 @@ class TestExtraMiddleware:
                 # We shouldn't deny for non-json content type
                 if endpoint_exists:
                     assert bool(
-                        200 <= res.status_code < 300 or
-                        res.status_code == meth_not_allowed
+                        200 <= res.status_code < 300
+                        or res.status_code == meth_not_allowed
                     )
                 else:
                     assert res.status == status_codes.HTTP_NOT_FOUND
@@ -366,13 +371,12 @@ class TestExtraMiddleware:
             pass
 
     @pytest.mark.parametrize(
-        'empty_body, endpoint, endpoint_exists', [
-            (False, '/foo', False),
-            (True, '/foo', False),
-        ]
+        "empty_body, endpoint, endpoint_exists",
+        [(False, "/foo", False), (True, "/foo", False)],
     )
-    def test_empty_requests_dropped(self, empty_body, endpoint,
-                                    endpoint_exists):
+    def test_empty_requests_dropped(
+        self, empty_body, endpoint, endpoint_exists
+    ):
         # type: (bool, str, bool) -> None
         """Test that empty requests are dropped before routing
 
@@ -384,8 +388,8 @@ class TestExtraMiddleware:
         # We have to forge the content-length header, because if it is
         # made automatically for our empty body, we won't get to the check
         # of the body contents.
-        heads = {'Content-Length': str('20')} if empty_body else {}
-        body = '' if empty_body else None
+        heads = {"Content-Length": str("20")} if empty_body else {}
+        body = "" if empty_body else None
 
         res = client.simulate_get(
             endpoint, body=body, headers=heads
@@ -396,8 +400,8 @@ class TestExtraMiddleware:
         else:
             if endpoint_exists:
                 assert bool(
-                    200 <= res.status_code < 300 or
-                    res.status_code == status_codes.HTTP_METHOD_NOT_ALLOWED
+                    200 <= res.status_code < 300
+                    or res.status_code == status_codes.HTTP_METHOD_NOT_ALLOWED
                 )
             else:
                 assert res.status == status_codes.HTTP_NOT_FOUND
