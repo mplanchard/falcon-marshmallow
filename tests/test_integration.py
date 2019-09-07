@@ -46,6 +46,7 @@ class DataStore:
     """
 
     def __init__(self):
+        """Construct the datastore."""
         self.store = {
             "first": {
                 "id": "first",
@@ -75,7 +76,7 @@ class DataStore:
 
 @pytest.fixture()
 def hydrated_client():
-    """A Falcon API with an endpoint for testing Marshmallow"""
+    """Create a Falcon API with an endpoint for testing Marshmallow"""
     data_store = DataStore()
 
     class PhilosopherResource:
@@ -105,8 +106,8 @@ def hydrated_client():
 
 @pytest.fixture()
 def hydrated_client_multiple_middleware():
-    """A Falcon API with an endpoint for testing Marshmallow, with all
-    included middlewares registered."""
+    """Create a server for testing, with all included middlewares"""
+
     data_store = DataStore()
 
     class PhilosopherResource:
@@ -196,18 +197,18 @@ class TestMarshmallowMiddleware:
             "schools": ["existentialism", "absurdism"],
             "works": ["The Stranger", "The Myth of Sisyphus"],
         }
-        resp = hydrated_client.simulate_post(
+        post_resp = hydrated_client.simulate_post(
             "/philosophers", body=json.dumps(phil)
         )  # type: testing.Result
-        assert resp.status_code == 200
-        parsed = resp.json
+        assert post_resp.status_code == 200
+        parsed = post_resp.json
         assert "id" in parsed
 
-        resp = hydrated_client.simulate_get(
+        get_resp = hydrated_client.simulate_get(
             "/philosophers/%s" % parsed["id"]
         )  # type: testing.Result
-        assert resp.status_code == 200
-        got = resp.json
+        assert get_resp.status_code == 200
+        got = get_resp.json
         assert got["id"] == parsed["id"]
         assert got["name"] == "Albért Camus"
         assert got["birth"] == "1913-11-07"
@@ -239,7 +240,7 @@ class TestMarshmallowMiddleware:
         ],
     )
     def test_post_bad_requests(self, hydrated_client, body):
-        # type: (testing.TestClient) -> None
+        # type: (testing.TestClient, "bytes") -> None
         """Test posting with invalid JSON"""
         resp = hydrated_client.simulate_post(
             "/philosophers", body=body
@@ -317,7 +318,7 @@ class TestExtraMiddleware:
         self, endpoint, method, endpoint_exists, ct_is_json, required
     ):
         # type: (str, str, bool, bool, bool) -> None
-        """Test HTTP methods that should reuquire content-type json
+        """Test HTTP methods that should require content-type json
 
         Note ``required`` is always true at the moment, because the
         middleware applies to all requests with no exceptions. If

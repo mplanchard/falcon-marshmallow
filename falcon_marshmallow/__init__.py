@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Middleware to integrate Marshmallow with Falcon
-"""
+"""Middleware to integrate Marshmallow with Falcon"""
 
 from ._version import __version__, __version_info__
 

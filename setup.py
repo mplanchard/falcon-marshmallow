@@ -69,7 +69,7 @@ TEST_DEPENDENCIES = [
     'mock;python_version<"3.3"',
 ]
 
-EXTRAS_DEPENDENCIES = {}
+EXTRAS_DEPENDENCIES = {}  # type: dict
 
 
 PACKAGE_EXCLUDE = ["*.tests", "*.tests.*"]

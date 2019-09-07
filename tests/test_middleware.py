@@ -14,13 +14,13 @@ from __future__ import (
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    import mock  # type: ignore
 
 from typing import Optional
 
 # Third party
 import pytest
-from falcon import errors, Request, Response
+from falcon import errors
 from marshmallow import fields, Schema
 
 # Local
@@ -217,7 +217,7 @@ class TestMarshmallow:
     def test_process_resource(
         self, stream, schema, schema_err, bad_sch, force_json, json_err, exp_ret
     ):
-        # type: (str, bool, bool, bool, bool, bool, bool, dict) -> None
+        # type: (str, bool, bool, bool, bool, bool, dict) -> None
         """Test processing a resource
 
         :param stream: the return of req.bounded_stream.read()
@@ -233,11 +233,11 @@ class TestMarshmallow:
         mw._force_json = force_json
         if schema:
             if bad_sch:
-                mw._get_schema = lambda *x, **y: self.FooSchema
+                setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema)
             else:
-                mw._get_schema = lambda *x, **y: self.FooSchema()
+                setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema())
         else:
-            mw._get_schema = lambda *x, **y: None
+            setattr(mw, "_get_schema", lambda *_, **__: None)
 
         req = mock.Mock(method="GET")
         req.bounded_stream.read.return_value = stream
@@ -245,22 +245,18 @@ class TestMarshmallow:
 
         if schema_err:
             with pytest.raises(errors.HTTPUnprocessableEntity):
-                # noinspection PyTypeChecker
-                mw.process_resource(req, "foo", "foo", "foo")
+                mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
             return
         if bad_sch:
             with pytest.raises(TypeError):
-                # noinspection PyTypeChecker
-                mw.process_resource(req, "foo", "foo", "foo")
+                mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
             return
         if json_err:
             with pytest.raises(errors.HTTPBadRequest):
-                # noinspection PyTypeChecker
-                mw.process_resource(req, "foo", "foo", "foo")
+                mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
             return
 
-        # noinspection PyTypeChecker
-        mw.process_resource(req, "foo", "foo", "foo")
+        mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
         if schema or force_json:
             assert req.context[mw._req_key] == exp_ret
         else:
@@ -352,11 +348,11 @@ class TestMarshmallow:
         mw._force_json = force_json
         if schema:
             if bad_sch:
-                mw._get_schema = lambda *x, **y: self.FooSchema
+                setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema)
             else:
-                mw._get_schema = lambda *x, **y: self.FooSchema()
+                setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema())
         else:
-            mw._get_schema = lambda *x, **y: None
+            setattr(mw, "_get_schema", lambda *_, **__: None)
 
         req = mock.Mock(method="GET")
         if res is None:
@@ -368,22 +364,18 @@ class TestMarshmallow:
 
         if bad_sch:
             with pytest.raises(TypeError):
-                # noinspection PyTypeChecker
-                mw.process_response(req, resp, "foo", "foo")
+                mw.process_response(req, resp, "foo", "foo")  # type: ignore
             return
         if sch_err:
             with pytest.raises(errors.HTTPInternalServerError):
-                # noinspection PyTypeChecker
-                mw.process_response(req, resp, "foo", "foo")
+                mw.process_response(req, resp, "foo", "foo")  # type: ignore
             return
         if json_err:
             with pytest.raises(errors.HTTPInternalServerError):
-                # noinspection PyTypeChecker
-                mw.process_response(req, resp, "foo", "foo")
+                mw.process_response(req, resp, "foo", "foo")  # type: ignore
             return
 
-        # noinspection PyTypeChecker
-        mw.process_response(req, resp, "foo", "foo")
+        mw.process_response(req, resp, "foo", "foo")  # type: ignore
         if res is None or (not schema and not force_json):
             # "body" has not been written, and is thus a mock object still
             assert isinstance(resp.body, mock.Mock)

@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Middleware class(es) for Falcon-Marshmallow
-"""
+"""Middleware class(es) for Falcon-Marshmallow"""
 
 # Std lib
 from __future__ import (
@@ -11,10 +9,13 @@ from __future__ import (
     unicode_literals,
 )
 import logging
-from typing import Container, Optional
+
+from typing import Any, Container, Optional
 
 # Third party
 import marshmallow
+from marshmallow import Schema, ValidationError
+
 import simplejson
 
 from falcon import Request, Response
@@ -25,7 +26,6 @@ from falcon.errors import (
     HTTPUnprocessableEntity,
     HTTPUnsupportedMediaType,
 )
-from marshmallow import Schema, ValidationError
 
 
 log = logging.getLogger(__name__)
@@ -37,9 +37,8 @@ MARSHMALLOW_2 = marshmallow.__version_info__ < (3,)
 
 
 def get_stashed_content(req):
-    """
-    A helper to have multiple middlewares acting on data in the request
-    stream.
+    # type: (Request) -> Any
+    """Allow multiple middlewares acting on data in the request stream.
 
     For this to work, no middlewware should use `req.stream.read()` directly,
     as that will either cause this to get `EOF` (`b''`) or the middleware will
@@ -148,7 +147,7 @@ class Marshmallow:
         force_json=True,
         json_module=simplejson,
     ):
-        # type: (str, str, bool, type(json)) -> None
+        # type: (str, str, bool, Any) -> None
         """Instantiate the middleware object
 
         :param req_key: (default ``'json'``) the key on the

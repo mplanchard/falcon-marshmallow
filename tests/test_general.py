@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Test some broad, structural things.
-"""
+"""Test some broad, structural things."""
 
 # Std lib
 from __future__ import (
