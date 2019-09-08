@@ -58,6 +58,8 @@ PACKAGE_DEPENDENCIES = [
     'typing;python_version<"3.5"',
 ]
 
+PACKAGE_DATA = {"falcon_marshmallow": ["py.typed"]}
+
 SETUP_DEPENDENCIES = ["pytest-runner"]
 
 TEST_DEPENDENCIES = [

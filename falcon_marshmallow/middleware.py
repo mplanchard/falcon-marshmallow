@@ -10,7 +10,7 @@ from __future__ import (
 )
 import logging
 
-from typing import Any, Container, Optional
+from typing import Any, Iterable, Optional
 
 # Third party
 import marshmallow
@@ -60,7 +60,7 @@ class JSONEnforcer:
     """Enforce that requests are JSON compatible"""
 
     def __init__(self, required_methods=JSON_CONTENT_REQUIRED_METHODS):
-        # type: (Container) -> None
+        # type: (Iterable[str]) -> None
         """Initialize the middleware
 
         :param required_methods: a collection of HTTP methods for
@@ -68,7 +68,7 @@ class JSONEnforcer:
             Content-Type header
         """
         log.debug("JSONEnforcer.__init__(%s)", required_methods)
-        self._methods = required_methods
+        self._methods = tuple(required_methods)
 
     def process_request(self, req, resp):
         # type: (Request, Response) -> None
