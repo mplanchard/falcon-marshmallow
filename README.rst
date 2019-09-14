@@ -11,6 +11,7 @@ Marshmallow serialization/deserialization middleware for Falcon
 Maintained By   `Matthew Planchard`_
 Author          `Matthew Planchard`_
 License         `MIT`_
+Compatibility   Python 2.7+, 3.4+
 Contributors    `@timc13`_, `Your Name Here!`_
 =============   ==================================================
 
@@ -230,6 +231,22 @@ The constructor takes the following arguments:
 * ``json_module`` (default ``simplejson``) - the module to use for
   (de)serialization; must implement the public interface of the ``json``
   standard library module
+  
+
+A Note on Python 2
+++++++++++++++++++
+
+Python 2 will be at its End of Life (EoL) `at the end of 2019 <https://pythonclock.org/>`_.
+This package is relatively simple, though, and Python 2 compatibility is 
+therefore not a huge burden to maintain. As such, we will continue to
+maintain Python 2 compatibility after its EoL, until and unless we decide
+that maintaining Python 2 compatibility puts our users at risk due to
+potential security vulnerabilities, we feel that the burden of maintaining
+Python 2 compatibility has become too high for our maintainers, or we determine 
+that we can provide a significant increase in value by dropping Python 2support.
+
+In any of those cases, we will try to clearly communicate the change with a major
+version bump.
 
 Contributing
 ------------
