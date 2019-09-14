@@ -23,7 +23,9 @@ Usage
 -----
 
 The primary middleware provided by this package is called ``Marshmallow``. To
-use it, simply add it to your Falcon app instantiation::
+use it, simply add it to your Falcon app instantiation:
+
+.. code:: python 
 
     from falcon import API
     from falcon_marshmallow import Marshmallow
@@ -69,7 +71,9 @@ Standard ReST Resource
 ~~~~~~~~~~~~~~~~~~~~~~
 
 Let's look at a standard ReST resource corresponding to a Philosopher
-resource in our chosen data store::
+resource in our chosen data store:
+
+.. code:: python
 
     from datetime import date
     from random import randint
@@ -160,7 +164,9 @@ is malformed, an HTTPBadRequest error will be raised. If the
 deserialization of the request body fails due to schema validation errors,
 an HTTPUnprocessableEntity error will be raised.
 
-We can test our new server easily enough using the ``requests`` library::
+We can test our new server easily enough using the ``requests`` library:
+
+.. code:: python
 
     >>> import requests
 
