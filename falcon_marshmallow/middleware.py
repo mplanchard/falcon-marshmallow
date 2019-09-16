@@ -219,11 +219,11 @@ class Marshmallow:
         sch_name = "%s_%s_schema" % (method.lower(), msg_type)
         specific_schema = getattr(resource, sch_name, None)
         if specific_schema is not None:
-            return specific_schema
+            return specific_schema  # type: ignore
 
         sch_name = "%s_schema" % method.lower()
         specific_schema = getattr(resource, sch_name, None)
-        return specific_schema
+        return specific_schema  # type: ignore
 
     @classmethod
     def _get_schema(cls, resource, method, msg_type):
@@ -260,7 +260,7 @@ class Marshmallow:
         specific_schema = cls._get_specific_schema(resource, method, msg_type)
         if specific_schema is not None:
             return specific_schema
-        return getattr(resource, "schema", None)
+        return getattr(resource, "schema", None)  # type: ignore
 
     def process_resource(self, req, resp, resource, params):
         # type: (Request, Response, object, dict) -> None
