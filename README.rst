@@ -60,8 +60,8 @@ named ``schema`` or ``<method>_schema``, where ``<method>`` is an HTTP method. I
 both an appropriate method schema and a general schema are defined, the
 method schema takes precedence.
 
-Marshmallow assumes JSON serialization and uses the standard library's
-``json`` module, but if you specify a different serialization module in a
+Marshmallow assumes JSON serialization and uses ``simplejson`` as the default
+(de)serializer, but if you specify a different serialization module in a
 schema's Meta class, that will be seamlessly integrated into this library's
 (de)serialization.
 
