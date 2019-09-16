@@ -29,6 +29,13 @@ now. Issues opened on the original fork will not be seen or resolved.
 .. _@timc13: https://github.com/timc13
 .. _ihiji/falcon-marshmallow: https://github.com/ihiji/falcon-marshmallow
 
+Installation
+------------
+
+Install from `pypi <https://pypi.org/project/falcon-marshmallow/>`_ with::
+
+    pip install falcon_marshmallow
+
 Usage
 -----
 
