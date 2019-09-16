@@ -15,10 +15,15 @@ Compatibility   Python 2.7+, 3.4+
 Contributors    `@timc13`_, `Your Name Here!`_
 =============   ==================================================
 
+**Note:** this package is a fork of `ihiji/falcon-marshmallow`_, of which I am the original
+author. The project was abandoned after Ihiji was purchased, so I'm maintaining it here
+now. Issues opened on the original fork will not be seen or resolved.
+
 .. _Matthew Planchard: https://github.com/mplanchard
 .. _MIT: https://github.com/mplanchard/falcon-marshmallow/blob/master/LICENSE
 .. _Your Name Here!: Contributing_
 .. _@timc13: https://github.com/timc13
+.. _ihiji/falcon-marshmallow: https://github.com/ihiji/falcon-marshmallow
 
 Usage
 -----
