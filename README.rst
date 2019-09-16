@@ -1,9 +1,13 @@
 falcon-marshmallow
 ==================
 
-======================================================================================   ======================================================================================
-.. image:: https://gitlab.com/mplanchard/falcon-marshmallow/badges/master/pipeline.svg   .. image:: https://gitlab.com/mplanchard/falcon-marshmallow/badges/master/coverage.svg
-======================================================================================   ======================================================================================
+.. image:: https://gitlab.com/mplanchard/falcon-marshmallow/badges/master/pipeline.svg
+   :target: https://gitlab.com/mplanchard/falcon-marshmallow/pipelines/
+   
+.. image:: https://gitlab.com/mplanchard/falcon-marshmallow/badges/master/coverage.svg
+   :target: https://gitlab.com/mplanchard/falcon-marshmallow/pipelines/
+
+-----------------------------------------------------------------
 
 Marshmallow serialization/deserialization middleware for Falcon
 
