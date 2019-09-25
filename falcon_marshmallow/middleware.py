@@ -13,6 +13,7 @@ import logging
 from typing import Any, Iterable, Optional
 
 # Third party
+from falcon.vendor import mimeparse
 import marshmallow
 from marshmallow import Schema, ValidationError
 
@@ -32,6 +33,7 @@ log = logging.getLogger(__name__)
 
 
 JSON_CONTENT_REQUIRED_METHODS = ("POST", "PUT", "PATCH")
+JSON_CONTENT_TYPE = 'application/json'
 CONTENT_KEY = "content"
 MARSHMALLOW_2 = marshmallow.__version_info__ < (3,)
 
@@ -262,6 +264,27 @@ class Marshmallow:
             return specific_schema
         return getattr(resource, "schema", None)  # type: ignore
 
+    @classmethod
+    def _content_type_is_json(cls, content_type):
+        # type: (str) -> bool
+        """Check if the provided content type is json. This uses similar code to client_accepts in falcon.request.
+        If content type is not provided, assume json for backwards compatibility.
+
+        :param content_type: a content type string from the request object
+            (e.g., 'application/json', 'text/csv', 'application/json;encoding=latin1')
+        :return: true if the given content type represents JSON
+        """
+        # PERF(kgriffs): Usually the following will be true, so
+        # try it first.
+        if content_type == JSON_CONTENT_TYPE or content_type is None:
+            return True
+
+        # Fall back to full-blown parsing
+        try:
+            return mimeparse.quality(content_type, JSON_CONTENT_TYPE) != 0.0
+        except ValueError:
+            return False
+
     def process_resource(self, req, resp, resource, params):
         # type: (Request, Response, object, dict) -> None
         """Deserialize request body with any resource-specific schemas
@@ -295,6 +318,10 @@ class Marshmallow:
             params,
         )
         if req.content_length in (None, 0):
+            return
+
+        if not self._content_type_is_json(req.content_type):
+            log.info("Non-json input, skipping deserialization")
             return
 
         sch = self._get_schema(resource, req.method, "request")
