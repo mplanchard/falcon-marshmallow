@@ -18,6 +18,8 @@ venv/bin/activate: setup.py
 		pylint \
 		pydocstyle \
 		pytest \
+		pytest-runner \
+		pytest-cov \
 		tox \
 		wheel
 	$(VENV) pip install -e .

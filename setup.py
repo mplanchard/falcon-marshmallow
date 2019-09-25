@@ -67,7 +67,6 @@ TEST_DEPENDENCIES = [
     "pytest-cov",
     'ipython<6;python_version<"3"',
     'ipython;python_version>="3"',
-    "ipdb",
     'mock;python_version<"3.3"',
 ]
 
