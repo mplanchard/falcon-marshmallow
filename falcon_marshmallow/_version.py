@@ -15,5 +15,5 @@ from __future__ import (
     unicode_literals,
 )
 
-__version_info__ = (0, 3, 0)
+__version_info__ = (0, 3, 1)
 __version__ = ".".join([str(ver) for ver in __version_info__])
