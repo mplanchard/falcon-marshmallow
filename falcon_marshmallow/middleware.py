@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 
 
 JSON_CONTENT_REQUIRED_METHODS = ("POST", "PUT", "PATCH")
-JSON_CONTENT_TYPE = 'application/json'
+JSON_CONTENT_TYPE = "application/json"
 CONTENT_KEY = "content"
 MARSHMALLOW_2 = marshmallow.__version_info__ < (3,)
 
@@ -142,14 +142,20 @@ class EmptyRequestDropper:
 class Marshmallow:
     """Attempt to deserialize objects with any available schemas"""
 
-    def __init__(
+    # TODO: consider some sort of config object as the options here
+    # continue to grow in number.
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         req_key="json",
         resp_key="result",
         force_json=True,
+        # TODO: deprecate `json_module` param and change name to something
+        # more generic, e.g. `content_parser`, with a specified interface
         json_module=simplejson,
+        expected_content_type=JSON_CONTENT_TYPE,
+        handle_unexpected_content_types=False,
     ):
-        # type: (str, str, bool, Any) -> None
+        # type: (str, str, bool, Any, str, bool) -> None
         """Instantiate the middleware object
 
         :param req_key: (default ``'json'``) the key on the
@@ -168,6 +174,19 @@ class Marshmallow:
             module for your Marshmallow schemas, you will have to
             specify using a schema metaclass, as defined in the
             `Marshmallow documentation`_
+        :param expected_content_type: the expected CONTENT_TYPE header
+            corresponding to content that should be parsed by the
+            Marshmallow schema. By default, responses that
+            have a specified content type other than `expected_content_type`
+            will be ignored by this middleware. See
+            `handle_unexpected_content_types` for more options.
+        :param handle_unexpected_content_types: whether content types other
+            than the `expected_content_type` should be handled, or
+            whether they should be ignored and allowed to pass through
+            to the application or to other middlewares. This defaults to
+            True. If it is set to False, the middleware will attempt to
+            parse ALL requests with the provided json_module and/or
+            Marshmallow schema.
 
             .. _marshmallow documentation: http://marshmallow.readthedocs.io/
                 en/latest/api_reference.html#marshmallow.Schema.Meta
@@ -184,6 +203,8 @@ class Marshmallow:
         self._resp_key = resp_key
         self._force_json = force_json
         self._json = json_module
+        self._expected_content_type = expected_content_type
+        self._handle_unexpected_content_types = handle_unexpected_content_types
 
     @staticmethod
     def _get_specific_schema(resource, method, msg_type):
@@ -264,24 +285,32 @@ class Marshmallow:
             return specific_schema
         return getattr(resource, "schema", None)  # type: ignore
 
-    @classmethod
-    def _content_type_is_json(cls, content_type):
+    def _content_is_expected_type(self, content_type):
         # type: (str) -> bool
-        """Check if the provided content type is json. This uses similar code to client_accepts in falcon.request.
-        If content type is not provided, assume json for backwards compatibility.
+        """Check if the provided content type is json.
+
+        This uses similar code to client_accepts in falcon.request.
+
+        If content type is not provided, assume json for backwards
+        compatibility.
 
         :param content_type: a content type string from the request object
-            (e.g., 'application/json', 'text/csv', 'application/json;encoding=latin1')
+            (e.g., 'application/json', 'text/csv',
+            'application/json;encoding=latin1')
+
         :return: true if the given content type represents JSON
         """
         # PERF(kgriffs): Usually the following will be true, so
         # try it first.
-        if content_type == JSON_CONTENT_TYPE or content_type is None:
+        if content_type == self._expected_content_type or content_type is None:
             return True
 
         # Fall back to full-blown parsing
         try:
-            return mimeparse.quality(content_type, JSON_CONTENT_TYPE) != 0.0
+            return bool(
+                mimeparse.quality(content_type, self._expected_content_type)
+                != 0.0
+            )
         except ValueError:
             return False
 
@@ -320,8 +349,16 @@ class Marshmallow:
         if req.content_length in (None, 0):
             return
 
-        if not self._content_type_is_json(req.content_type):
-            log.info("Non-json input, skipping deserialization")
+        if (
+            not self._handle_unexpected_content_types
+            and not self._content_is_expected_type(req.content_type)
+        ):
+            log.info(
+                "Input type (%s) is not of expected type (%s), "
+                "skipping deserialization",
+                req.content_type,
+                self._expected_content_type,
+            )
             return
 
         sch = self._get_schema(resource, req.method, "request")
