@@ -1,0 +1,62 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+pool:
+  vmImage: 'ubuntu-latest'
+strategy:
+  matrix:
+    Python27:
+      python.version: '2.7'
+      toxenv: py27
+    Python35-mm2:
+      python.version: '3.5'
+      toxenv: py35-marshmallow2
+    Python35-mm3:
+      python.version: '3.5'
+      toxenv: py35-marshmallow3
+    Python36-mm2:
+      python.version: '3.6'
+      toxenv: py36-marshmallow2
+    Python36-mm3:
+      python.version: '3.6'
+      toxenv: py36-marshmallow3
+    Python37-mm2:
+      python.version: '3.7'
+      toxenv: py37-marshmallow2
+    Python37-mm3:
+      python.version: '3.7'
+      toxenv: py37-marshmallow3
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '$(python.version)'
+  displayName: 'Use Python $(python.version)'
+
+- script: |
+    sudo apt-get install python3-venv
+  condition: startswith(variables['python.version'], '3')
+  displayName: 'install deps'
+
+- script: |
+    make setup
+    source venv/bin/activate; pip install no-manylinux pytest-azurepipelines
+    source venv/bin/activate; pip install --no-binary :all: --force-reinstall falcon
+    make lint
+  condition: and(ne(variables['python.version'], '2.7'), ne(variables['python.version'], '3.5'))
+  displayName: 'lint'
+
+
+- script: |
+    pip install tox
+    tox -e $(toxenv)
+  condition: or(eq(variables['python.version'], '2.7'), eq(variables['python.version'], '3.5'))
+  displayName: 'test'
+
+- script: |
+    TESTENV=$(toxenv) make test-env
+  condition: and(ne(variables['python.version'], '2.7'), ne(variables['python.version'], '3.5'))
+  displayName: 'test'
+
