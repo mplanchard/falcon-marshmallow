@@ -287,12 +287,12 @@ class Marshmallow:
 
     def _content_is_expected_type(self, content_type):
         # type: (str) -> bool
-        """Check if the provided content type is json.
+        """Check if the provided content type is the expected type.
 
         This uses similar code to client_accepts in falcon.request.
 
-        If content type is not provided, assume json for backwards
-        compatibility.
+        If content type is not provided, we assume it is of the expected
+        type to maintain backwards compatibility.
 
         :param content_type: a content type string from the request object
             (e.g., 'application/json', 'text/csv',
