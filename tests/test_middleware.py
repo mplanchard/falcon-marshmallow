@@ -138,11 +138,12 @@ class TestMarshmallow:
             assert val == exp_value
 
     @pytest.mark.parametrize(
-        "stream, content_type, schema, schema_err, bad_sch, force_json, json_err, " "exp_ret",
+        "stream, content_type, schema, schema_err, bad_sch, force_json, "
+        "json_err, exp_ret",
         [
             (  # 0: Good schema
                 '{"foo": "test"}',
-                'application/json',
+                "application/json",
                 True,
                 False,
                 False,
@@ -152,7 +153,7 @@ class TestMarshmallow:
             ),
             (  # 1: Schema errors on load
                 '{"foo": "test", "int": "test"}',
-                'application/json',
+                "application/json",
                 True,
                 True,
                 False,
@@ -162,7 +163,7 @@ class TestMarshmallow:
             ),
             (  # 2: Good schema, bad unicode in body
                 '{"foo": "testé"}',
-                'application/json',
+                "application/json",
                 True,
                 False,
                 False,
@@ -172,7 +173,7 @@ class TestMarshmallow:
             ),
             (  # 3: Bad schema
                 '{"foo": "test"}',
-                'application/json',
+                "application/json",
                 True,
                 False,
                 True,
@@ -182,7 +183,7 @@ class TestMarshmallow:
             ),
             (  # 4: No schema, no force json (no change to req.context)
                 '{"foo": "test"}',
-                'application/json',
+                "application/json",
                 False,
                 False,
                 False,
@@ -192,7 +193,7 @@ class TestMarshmallow:
             ),
             (  # 5: No schema, force json
                 '{"foo": "test"}',
-                'application/json',
+                "application/json",
                 False,
                 False,
                 False,
@@ -202,7 +203,7 @@ class TestMarshmallow:
             ),
             (  # 6: No schema, force json, bad json
                 '{"foo": }',
-                'application/json',
+                "application/json",
                 False,
                 False,
                 False,
@@ -212,7 +213,7 @@ class TestMarshmallow:
             ),
             (  # 7: No schema, force json, good json, bad unicode
                 '{"foo": "testé"}',
-                'application/json',
+                "application/json",
                 False,
                 False,
                 False,
@@ -222,7 +223,7 @@ class TestMarshmallow:
             ),
             (  # 8: Good schema, extra info on content type
                 '{"foo": "test"}',
-                'application/json;encoding=latin1',
+                "application/json;encoding=latin1",
                 True,
                 False,
                 False,
@@ -241,8 +242,8 @@ class TestMarshmallow:
                 {"bar": "test"},
             ),
             (  # 10: Non-json (no change to req.context)
-                '1,2,\'string\'',
-                'text/csv',
+                "1,2,'string'",
+                "text/csv",
                 False,
                 False,
                 False,
@@ -253,7 +254,15 @@ class TestMarshmallow:
         ],
     )
     def test_process_resource(
-        self, stream, content_type, schema, schema_err, bad_sch, force_json, json_err, exp_ret
+        self,
+        stream,
+        content_type,
+        schema,
+        schema_err,
+        bad_sch,
+        force_json,
+        json_err,
+        exp_ret,
     ):
         # type: (str, str, bool, bool, bool, bool, bool, dict) -> None
         """Test processing a resource
@@ -300,6 +309,42 @@ class TestMarshmallow:
             assert req.context[mw._req_key] == exp_ret
         else:
             assert mw._req_key not in req.context
+
+    def test_process_resource_ignores_unexpected_content_by_default(self):
+        """By default, we ignore unexpected content types."""
+        mw = mid.Marshmallow()
+        setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema())
+        req = mock.Mock(method="GET", content_type="application/pdf")
+        req.bounded_stream.read.return_value = ""
+        req.context = {}
+
+        mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
+        assert mw._req_key not in req.context
+
+    def test_nondefault_unexpected_content_type(self):
+        """We can specify any content type to handle."""
+        mw = mid.Marshmallow(expected_content_type="application/pdf")
+        setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema())
+        req = mock.Mock(method="GET", content_type="application/pdf")
+        req.bounded_stream.read.return_value = '{"foo": "test"}'
+        req.context = {}
+
+        mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
+        assert req.context[mw._req_key] == {"bar": "test"}
+
+    def test_handle_unexpected_content_type(self):
+        """We can specify to handle unexpected types."""
+        mw = mid.Marshmallow(
+            expected_content_type="application/pdf",
+            handle_unexpected_content_types=True,
+        )
+        setattr(mw, "_get_schema", lambda *_, **__: self.FooSchema())
+        req = mock.Mock(method="GET", content_type="text/plain")
+        req.bounded_stream.read.return_value = '{"foo": "test"}'
+        req.context = {}
+
+        mw.process_resource(req, "foo", "foo", "foo")  # type: ignore
+        assert req.context[mw._req_key] == {"bar": "test"}
 
     @pytest.mark.parametrize(
         "res, schema, sch_err, bad_sch, force_json, json_err, exp_ret",
